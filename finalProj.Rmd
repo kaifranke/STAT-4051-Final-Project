@@ -6,20 +6,10 @@ output: html_document
 ---
 
 ```{r}
-pitches2023 <- read.csv("C:/Users/kaifr/OneDrive/Miscellaneous/Desktop/Productivity/Baseball Research/Data/pitches2023.csv")
 
 library(tidyverse)
 
-movementUnsc = pitches2023 %>%
-  filter(pitch_type %in% c("CU", "FC", "SL", "SV", "KC"),
-         game_date >= "2023-03-30" & game_date <= "2023-04-10",
-         !is.na(pfx_x),
-         !is.na(pfx_z),
-         !is.na(release_speed)) %>%
-  mutate(pfx_x = ifelse(p_throws == "L", -pfx_x, pfx_x),
-         whiff = ifelse(description %in% c("swinging_strike", "swinging_strike_blocked"), 1, 0),
-         swing = ifelse(description %in% c("swinging_strike", "swinging_strike_blocked", "hit_into_play", "foul", "foul_tip"), 1, 0)) %>%
-  select(pitch_type, whiff, swing, estimated_woba_using_speedangle, release_speed, pfx_x, pfx_z)
+movementUnsc = read.csv("C:/Users/kaifr/OneDrive/Miscellaneous/Desktop/Productivity/School/STAT 4051/Final Project/stat4051finProjDat.csv")
 
 movement = scale(movementUnsc[,5:7]) %>%
   na.omit()
