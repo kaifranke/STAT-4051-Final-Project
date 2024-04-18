@@ -1,0 +1,101 @@
+---
+title: "Pitch Clustering - STAT 4051"
+author: "Kai Franke & Jack Rogers"
+date: "2024-04-18"
+output: html_document
+---
+
+```{r}
+pitches2023 <- read.csv("C:/Users/kaifr/OneDrive/Miscellaneous/Desktop/Productivity/Baseball Research/Data/pitches2023.csv")
+
+library(tidyverse)
+
+movementUnsc = pitches2023 %>%
+  filter(pitch_type %in% c("CU", "FC", "SL", "SV", "KC"),
+         game_date >= "2023-03-30" & game_date <= "2023-04-10",
+         !is.na(pfx_x),
+         !is.na(pfx_z),
+         !is.na(release_speed)) %>%
+  mutate(pfx_x = ifelse(p_throws == "L", -pfx_x, pfx_x),
+         whiff = ifelse(description %in% c("swinging_strike", "swinging_strike_blocked"), 1, 0),
+         swing = ifelse(description %in% c("swinging_strike", "swinging_strike_blocked", "hit_into_play", "foul", "foul_tip"), 1, 0)) %>%
+  select(pitch_type, whiff, swing, estimated_woba_using_speedangle, release_speed, pfx_x, pfx_z)
+
+movement = scale(movementUnsc[,5:7]) %>%
+  na.omit()
+
+```
+
+Hierarchical
+
+```{r}
+
+dissim = dist(movement)
+
+hierClust = hclust(dissim, method = "average")
+plot(hierClust)
+
+clusters = cutree(hierClust, 4)
+
+finHC = cbind(movementUnsc, clusters = as.character(clusters))
+
+ggplot(finHC, aes(pfx_x, pfx_z, color = clusters)) +
+  geom_point()
+ggplot(finHC, aes(pfx_x, release_speed, color = clusters)) +
+  geom_point()
+ggplot(finHC, aes(pfx_z, release_speed, color = clusters)) +
+  geom_point()
+
+finHC %>%
+  group_by(clusters) %>%
+  summarise(n = n(),
+            velo = round(mean(release_speed),1),
+            pfx_x = round(mean(pfx_x),2),
+            pfx_z = round(mean(pfx_z),2),
+            xwOBAcon = round(mean(estimated_woba_using_speedangle, na.rm = T),3),
+            whiffs = sum(whiff),
+            swings = sum(swing),
+            whiffP = round(100 * whiffs/swings, 1)) %>%
+  select(-whiffs, -swings)
+
+```
+
+Kmeans
+
+```{r}
+library(cluster)
+
+val <- rep(0,10)
+for(k in 2:10){
+  tmp.km <- kmeans(movement,nstart=50,centers=k)
+  val[k] <- tmp.km$tot.withinss
+}
+val[1] <- tmp.km$totss
+
+plot(1:10,log(val),xlab="K",ylab="log-WSSE", type="b")
+
+kmeansC = kmeans(movement, nstart = 50, centers = 4)
+
+finKM = cbind(movementUnsc, clusters = as.character(kmeansC$cluster))
+
+ggplot(finKM, aes(pfx_x, pfx_z, color = clusters)) +
+  geom_point()
+ggplot(finKM, aes(pfx_x, release_speed, color = clusters)) +
+  geom_point()
+ggplot(finKM, aes(pfx_z, release_speed, color = clusters)) +
+  geom_point()
+
+finKM %>%
+  group_by(clusters) %>%
+  summarise(n = n(),
+            velo = round(mean(release_speed),1),
+            pfx_x = round(mean(pfx_x),2),
+            pfx_z = round(mean(pfx_z),2),
+            xwOBAcon = round(mean(estimated_woba_using_speedangle, na.rm = T),3),
+            whiffs = sum(whiff),
+            swings = sum(swing),
+            whiffP = round(100 * whiffs/swings, 1)) %>%
+  select(-whiffs, -swings)
+
+```
+
