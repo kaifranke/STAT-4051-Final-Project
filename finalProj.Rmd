@@ -11,7 +11,7 @@ library(tidyverse)
 
 movementUnsc = read.csv("C:/Users/kaifr/OneDrive/Miscellaneous/Desktop/Productivity/School/STAT 4051/Final Project/stat4051finProjDat.csv")
 
-movement = scale(movementUnsc[,5:7]) %>%
+movement = scale(movementUnsc[,6:8]) %>%
   na.omit()
 
 ```
